@@ -1,0 +1,288 @@
+### 1. Criar um novo usuário (sucesso)
+# @name criarUsuario
+POST http://localhost:3333/usuarios
+Content-Type: application/json
+
+{
+  "nome": "Administrador",
+  "email": "admento@ba.com",
+  "senha": "123456",
+  "cargo": "administrador"
+}
+
+###
+POST http://localhost:3333/usuarios
+Content-Type: application/json
+
+{
+  "nome": "luan",
+  "email": "luan@evento.com",
+  "senha": "123456789",
+  "cargo": "gerente"
+}
+
+### 2. Tentar criar o mesmo usuário novamente (erro)
+# @name criarUsuarioDuplicado
+POST http://localhost:3333/usuarios
+Content-Type: application/json
+
+{
+  "nome": "Administrador",
+  "email": "admin@evento.com",
+  "senha": "123456",
+  "cargo": "administrador"
+}
+
+### 3. Fazer login com sucesso
+# @name loginSucesso
+POST http://localhost:3333/sessoes
+Content-Type: application/json
+
+{
+  "email": "luan@evento.com",
+  "senha": "123456789"
+}
+###
+POST http://localhost:3333/sessoes
+Content-Type: application/json
+
+{
+  "email": "admin@evento.com",
+  "senha": "123456"
+}
+
+
+### 4. Tentar fazer login com senha errada
+# @name loginFalha
+POST http://localhost:3333/sessoes
+Content-Type: application/json
+
+{
+  "email": "admin@evnto.com",
+  "senha": "senhaerrada"
+}
+
+
+### 5. Tentar listar usuários SEM o token (falha)
+# @name listarUsuariosFalha
+GET http://localhost:3333/usuarios
+
+
+### 6. Listar usuários COM o token (sucesso)
+# @name listarUsuariosSucesso
+GET http://localhost:3333/usuarios
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+
+### =======================================
+### PARTICIPANTES (Rotas Protegidas)
+### =======================================
+
+
+### 7. Cadastrar um novo participante (sucesso)
+# @name criarParticipante
+POST http://localhost:3333/participantes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "nome": "Luan Souza",
+  "email": "luan.souza@email.com"
+}
+
+### 8. Cadastrar um segundo participante (sucesso)
+# @name criarOutroParticipante
+POST http://localhost:3333/participantes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "nome": "Maria Silva",
+  "email": "maria.silva@email.com"
+}
+
+### 9. Listar todos os participantes (sucesso)
+# @name listarParticipantes
+GET http://localhost:3333/participantes
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "nome": "Luan Souza",
+  "email": "luan.souza@email.com"
+}
+
+### 8. Cadastrar um segundo participante (sucesso)
+# @name criarOutroParticipante
+POST http://localhost:3333/participantes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "nome": "Maria Silva",
+  "email": "maria.silva@email.com"
+}
+
+### 9. Listar todos os participantes (sucesso)
+# @name listarParticipantes
+GET http://localhost:3333/participantes
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+### =======================================
+### TESTANDO A VALIDAÇÃO (ZOD)
+### =======================================
+
+### 10. Tentar criar usuário com dados faltando (erro)
+# @name validacaoUsuarioFaltando
+POST http://localhost:3333/usuarios
+Content-Type: application/json
+
+{
+  "nome": "Teste",
+  "email": "teste@email.com"
+}
+
+### 11. Tentar criar usuário com senha curta (erro)
+# @name validacaoSenhaCurta
+POST http://localhost:3333/usuarios
+Content-Type: application/json
+
+{
+  "nome": "Usuario Senha Curta",
+  "email": "senha.curta@email.com",
+  "senha": "123",
+  "cargo": "tester"
+}
+
+### 12. Tentar criar usuário com email inválido (erro)
+# @name validacaoEmailInvalido
+POST http://localhost:3333/usuarios
+Content-Type: application/json
+
+{
+  "nome": "Usuario Email Invalido",
+  "email": "email-invalido",
+  "senha": "123456",
+  "cargo": "tester"
+}
+
+
+### =======================================
+### TESTANDO A VALIDAÇÃO DE PARTICIPANTE (ZOD)
+### =======================================
+
+### 13. Tentar criar participante sem nome (erro)
+# @name validacaoParticipanteSemNome
+POST http://localhost:3333/participantes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "email": "semnome@email.com"
+}
+
+
+### 14. Tentar criar participante com e-mail inválido (erro)
+# @name validacaoParticipanteEmailInvalido
+POST http://localhost:3333/participantes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "nome": "Participante Teste",
+  "email": "email-errado"
+}
+
+
+### 15. Criar participante com sucesso (sem e-mail)
+# @name validacaoParticipanteSucesso
+POST http://localhost:3333/participantes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "nome": "Participante Válido"
+}
+
+
+### =======================================
+### GERENCIAMENTO DE CARTÕES RFID
+### =======================================
+
+### 16. Vincular um cartão a um participante (sucesso)
+# @name criarCartao
+POST http://localhost:3333/cartoes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "codigo_rfid": "A1:B2:C3:D4",
+  "participante_id": 1
+}
+
+
+### 17. Tentar vincular um cartão a um participante que não existe (erro)
+# @name criarCartaoParticipanteInvalido
+POST http://localhost:3333/cartoes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "codigo_rfid": "E5:F6:G7:H8",
+  "participante_id": 999
+}
+
+
+### 18. Listar todos os cartões e seus donos (sucesso)
+# @name listarCartoes
+GET http://localhost:3333/cartoes
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+
+### =======================================
+### TESTANDO O PORTÃO (SIMULAÇÃO IoT)
+### =======================================
+
+### 19. Simular primeira ENTRADA (sucesso)
+# @name simularEntrada
+POST http://localhost:3333/acesso
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "codigo_rfid": "A1:B2:C3:D4"
+}
+
+### 20. Simular SAÍDA (sucesso)
+# @name simularSaida
+POST http://localhost:3333/acesso
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "codigo_rfid": "A1:B2:C3:D4"
+}
+
+### 21. Simular ENTRADA novamente (sucesso)
+# @name simularEntrada2
+POST http://localhost:3333/acesso
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "codigo_rfid": "A1:B2:C3:D4"
+}
+
+### 22. Simular cartão que NÃO EXISTE (erro)
+# @name simularCartaoInvalido
+POST http://localhost:3333/acesso
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+
+{
+  "codigo_rfid": "XX:YY:ZZ:WW"
+}
+
+### 23. Ver os logs de acesso (para o dashboard)
+# @name verLogs
+GET http://localhost:3333/acesso/logs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
