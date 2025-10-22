@@ -11,7 +11,16 @@ const options = {
     info: {
       title: 'API de Controle de Acesso RFID',
       version: '1.0.0',
-      description: 'API RESTful para gerenciamento de participantes e controle de acesso com IoT e RFID.',
+      description: `
+      API RESTful para gerenciamento de participantes e controle de acesso com IoT e RFID.
+      
+      ## Principais funcionalidades:
+      - Autenticação de usuários com JWT
+      - Gerenciamento de participantes
+      - Controle de cartões RFID
+      - Registro de acessos (entrada/saída)
+      - Monitoramento em tempo real
+      `,
       contact: {
         name: 'Luan (Desenvolvedor)',
         email: 'luan@evento.com',
@@ -60,8 +69,8 @@ const options = {
       },
     ],
   },
-  // Diz ao Swagger para ler todos os arquivos .js dentro da pasta de rotas
-  apis: [routesPath],
+  // Diz ao Swagger para ler os schemas e as rotas
+  apis: ['./src/schemas/*.js', './src/routes/*.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);

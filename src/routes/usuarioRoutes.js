@@ -11,31 +11,31 @@ const routes = new Router();
 /**
  * @swagger
  * components:
- * schemas:
- * # ===============================================
- * # SCHEMAS DE AUTENTICAÇÃO
- * # ===============================================
- * Usuario:
- * type: object
- * properties:
- * id:
- * type: integer
- * description: ID auto-gerado do usuário.
- * nome:
- * type: string
- * description: Nome do usuário.
- * email:
- * type: string
- * format: email
- * description: Email de login do usuário.
- * cargo:
- * type: string
- * description: Função do usuário (ex: administrador).
- * example:
- * id: 1
- * nome: "Administrador"
- * email: "admin@evento.com"
- * cargo: "administrador"
+ *   schemas:
+ *     # ===============================================
+ *     # SCHEMAS DE AUTENTICAÇÃO
+ *     # ===============================================
+ *     Usuario:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID auto-gerado do usuário.
+ *         nome:
+ *           type: string
+ *           description: Nome do usuário.
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: Email de login do usuário.
+ *         cargo:
+ *           type: string
+ *           description: Função do usuário (ex: administrador).
+ *       example:
+ *         id: 1
+ *         nome: "Administrador"
+ *         email: "admin@evento.com"
+ *         cargo: "administrador"
  *
  * NovoUsuario:
  * type: object
@@ -316,25 +316,25 @@ routes.post(
 /**
  * @swagger
  * /usuarios:
- * post:
- * summary: Cadastra um novo usuário no sistema.
- * tags: [Autenticação]
- * security: [] # Esta rota é PÚBLICA, remove a segurança padrão
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * $ref: '#/components/schemas/NovoUsuario'
- * responses:
- * '201': # <--- CORRIGIDO
- * description: Usuário criado com sucesso. Retorna os dados do usuário (sem a senha).
- * content:
- * application/json:
- * schema:
- * $ref: '#/components/schemas/Usuario'
- * '400': # <--- CORRIGIDO
- * description: Erro de validação (ex: email já em uso, senha curta).
+ *   post:
+ *     summary: Cadastra um novo usuário no sistema.
+ *     tags: [Autenticação]
+ *     security: [] # Esta rota é PÚBLICA, remove a segurança padrão
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/NovoUsuario'
+ *     responses:
+ *       '201':
+ *         description: Usuário criado com sucesso. Retorna os dados do usuário (sem a senha).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Usuario'
+ *       '400':
+ *         description: Erro de validação (ex: email já em uso, senha curta).
  */
 routes.post(
   '/usuarios',
@@ -350,22 +350,22 @@ routes.use(authMiddleware);
 /**
  * @swagger
  * /usuarios:
- * get:
- * summary: Lista todos os usuários cadastrados.
- * tags: [Autenticação]
- * security:
- * - bearerAuth: []
- * responses:
- * '200': # <--- CORRIGIDO
- * description: Lista de usuários.
- * content:
- * application/json:
- * schema:
- * type: array
- * items:
- * $ref: '#/components/schemas/Usuario'
- * '401': # <--- CORRIGIDO
- * description: Não autorizado (token inválido ou não fornecido).
+ *   get:
+ *     summary: Lista todos os usuários cadastrados.
+ *     tags: [Autenticação]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Lista de usuários.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Usuario'
+ *       '401':
+ *         description: Não autorizado (token inválido ou não fornecido).
  */
 routes.get('/usuarios', UsuarioController.index);
 
