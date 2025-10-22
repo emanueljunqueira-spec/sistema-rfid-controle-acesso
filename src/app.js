@@ -2,6 +2,8 @@
 require('dotenv').config(); // <-- ADICIONE AQUI
 const express = require('express');
 const sequelize = require('./config/database');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger')
 require('./app/models');
 const usuarioRoutes = require('./routes/usuarioRoutes'); 
 const participanteRoutes = require('./routes/participanteRoutes');
@@ -23,7 +25,15 @@ class App {
   }
 
    routes() {
-    // Vamos remover a rota de teste e adicionar a nossa rota principal
+      this.server.use(
+        '/api-docs', // O endereço onde a documentação ficará
+        swaggerUi.serve,
+        swaggerUi.setup(swaggerSpec, {
+          customSiteTitle: 'API RFID - Documentação', // Título da aba do navegador
+          customCss: '.swagger-ui .topbar { display: none }' // Esconde a barra superior do Swagger
+        })
+      );
+      
     this.server.use(usuarioRoutes); // <-- ADICIONE ESTA LINHA
     this.server.use(participanteRoutes);
     this.server.use(cartaoRoutes);
