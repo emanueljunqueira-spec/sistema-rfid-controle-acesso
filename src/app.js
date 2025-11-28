@@ -10,6 +10,7 @@ const usuarioRoutes = require('./routes/usuarioRoutes');
 const participanteRoutes = require('./routes/participanteRoutes');
 const cartaoRoutes = require('./routes/cartaoRoutes');
 const acessoRoutes = require('./routes/acessoRoutes');
+const eventoRoutes = require('./routes/eventoRoutes');
 
 class App {
   constructor() {
@@ -41,6 +42,7 @@ class App {
     this.server.use(participanteRoutes);
     this.server.use(cartaoRoutes);
     this.server.use(acessoRoutes);
+    this.server.use(eventoRoutes);
   }
 
   async database() {

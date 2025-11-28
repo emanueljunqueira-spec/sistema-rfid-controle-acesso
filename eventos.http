@@ -1,0 +1,250 @@
+### =============================================
+### VARIÁVEIS - Use o token obtido no login
+### =============================================
+# Token atual (substitua após fazer login)
+# @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+
+### =============================================
+### LOGIN (Obter Token)
+### =============================================
+
+### 1. Fazer login para obter token
+# @name loginAdmin
+POST http://localhost:3333/sessoes
+Content-Type: application/json
+
+{
+  "email": "admin@evento.com",
+  "senha": "123456"
+}
+
+
+### =============================================
+### EVENTOS - CRUD COMPLETO
+### =============================================
+
+### 2. Criar Evento (sucesso)
+# @name criarEvento
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Workshop de RFID",
+  "descricao": "Evento para demonstrar o sistema de controle de acesso",
+  "data_evento": "2025-12-15T14:00:00.000Z",
+  "local": "Auditório Principal",
+  "status": "ativo"
+}
+
+### 3. Criar segundo Evento (sucesso)
+# @name criarOutroEvento
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Conferência de Tecnologia",
+  "descricao": "Palestras sobre inovação e tecnologia",
+  "data_evento": "2025-12-20T09:00:00.000Z",
+  "local": "Centro de Convenções",
+  "status": "ativo"
+}
+
+### 4. Listar todos os Eventos (sucesso)
+# @name listarEventos
+GET http://localhost:3333/eventos
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+### 5. Atualizar Evento (sucesso)
+# @name atualizarEvento
+PUT http://localhost:3333/eventos/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Workshop de RFID - Edição Atualizada",
+  "descricao": "Descrição atualizada do evento",
+  "data_evento": "2025-12-18T10:00:00.000Z",
+  "local": "Sala de Conferências",
+  "status": "ativo"
+}
+
+### 6. Deletar Evento (apenas admin)
+# @name deletarEvento
+DELETE http://localhost:3333/eventos/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "senhaConfirmacao": "123456"
+}
+
+
+### =============================================
+### TESTANDO A VALIDAÇÃO DE EVENTO (ZOD)
+### =============================================
+
+### 7. Tentar criar evento sem título (erro)
+# @name validacaoEventoSemTitulo
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "descricao": "Evento sem título",
+  "data_evento": "2025-12-15T14:00:00.000Z",
+  "local": "Auditório"
+}
+
+### 8. Tentar criar evento com título muito curto (erro)
+# @name validacaoEventoTituloCurto
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "AB",
+  "data_evento": "2025-12-15T14:00:00.000Z",
+  "local": "Auditório"
+}
+
+### 9. Tentar criar evento com data inválida (erro)
+# @name validacaoEventoDataInvalida
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Evento Teste",
+  "data_evento": "data-invalida",
+  "local": "Auditório"
+}
+
+### 10. Tentar criar evento com status inválido (erro)
+# @name validacaoEventoStatusInvalido
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Evento Teste",
+  "data_evento": "2025-12-15T14:00:00.000Z",
+  "local": "Auditório",
+  "status": "invalido"
+}
+
+### 11. Tentar criar evento sem local (erro)
+# @name validacaoEventoSemLocal
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Evento Teste",
+  "data_evento": "2025-12-15T14:00:00.000Z"
+}
+
+### 12. Tentar criar evento sem data (erro)
+# @name validacaoEventoSemData
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Evento Teste",
+  "local": "Auditório"
+}
+
+### 13. Criar evento sem descrição (sucesso - descrição é opcional)
+# @name criarEventoSemDescricao
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Evento Minimalista",
+  "data_evento": "2025-12-25T08:00:00.000Z",
+  "local": "Sala 101"
+}
+
+### 14. Criar evento sem status (sucesso - usa default 'ativo')
+# @name criarEventoSemStatus
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Evento Status Default",
+  "descricao": "Evento para testar status default",
+  "data_evento": "2025-12-30T15:00:00.000Z",
+  "local": "Auditório B"
+}
+
+
+### =============================================
+### TESTANDO ATUALIZAÇÃO DE EVENTO (ZOD)
+### =============================================
+
+### 15. Atualizar apenas o título (sucesso)
+# @name atualizarEventoTitulo
+PUT http://localhost:3333/eventos/2
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "titulo": "Novo Título do Evento"
+}
+
+### 16. Atualizar status para cancelado (sucesso)
+# @name atualizarEventoStatus
+PUT http://localhost:3333/eventos/2
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "status": "cancelado"
+}
+
+### 17. Atualizar status para finalizado (sucesso)
+# @name atualizarEventoFinalizado
+PUT http://localhost:3333/eventos/2
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzY0MzcyMjMyLCJleHAiOjE3NjQ5NzcwMzJ9.mGoY9gK669H8IKbpsngzq_yCooyJSckROVBgp40g3EQ
+
+{
+  "status": "finalizado"
+}
+
+
+### =============================================
+### TESTANDO ERROS DE AUTENTICAÇÃO
+### =============================================
+
+### 18. Tentar listar eventos SEM token (erro)
+# @name listarEventosSemToken
+GET http://localhost:3333/eventos
+
+### 19. Tentar criar evento SEM token (erro)
+# @name criarEventoSemToken
+POST http://localhost:3333/eventos
+Content-Type: application/json
+
+{
+  "titulo": "Evento Sem Token",
+  "data_evento": "2025-12-15T14:00:00.000Z",
+  "local": "Auditório"
+}
+
+### 20. Tentar criar evento com token inválido (erro)
+# @name criarEventoTokenInvalido
+POST http://localhost:3333/eventos
+Content-Type: application/json
+Authorization: Bearer token_invalido_123
+
+{
+  "titulo": "Evento Token Inválido",
+  "data_evento": "2025-12-15T14:00:00.000Z",
+  "local": "Auditório"
+}
