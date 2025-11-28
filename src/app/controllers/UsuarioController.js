@@ -3,61 +3,64 @@ const Usuario = require('../models/Usuario');
 const bcrypt = require('bcryptjs');
 
 class UsuarioController {
-  // Método para listar todos os usuários (protegido)
   async index(req, res) {
-    console.log('=> Acessando a rota para LISTAR usuários.');
     const usuarios = await Usuario.findAll({
       attributes: ['id', 'nome', 'email', 'cargo'],
     });
     return res.json(usuarios);
   }
 
-  // Método para criar um novo usuário (público)
   async store(req, res) {
-    // PONTO DE VERIFICAÇÃO 1: A requisição chegou aqui?
-    console.log('=> 1. Acessando a rota para CRIAR usuário.');
-
     try {
-      // PONTO DE VERIFICAÇÃO 2: O que estamos recebendo do cliente?
-      console.log('=> 2. Dados recebidos no corpo (req.body):', req.body);
       const { nome, email, senha, cargo } = req.body;
+      if (!senha) return res.status(400).json({ error: 'Senha obrigatória.' });
 
-      // Validação crucial: A senha foi enviada?
-      if (!senha) {
-        console.log('=> ERRO: Senha não foi fornecida no corpo da requisição.');
-        return res.status(400).json({ error: 'O campo "senha" é obrigatório.' });
-      }
+      const existe = await Usuario.findOne({ where: { email } });
+      if (existe) return res.status(400).json({ error: 'E-mail já em uso.' });
 
-      const usuarioExistente = await Usuario.findOne({ where: { email } });
-
-      if (usuarioExistente) {
-        console.log('=> 3. E-mail já existe, bloqueando cadastro.');
-        return res.status(400).json({ error: 'Este e-mail já está em uso.' });
-      }
-
-      console.log('=> 3. E-mail disponível. Criptografando senha...');
       const senha_hash = await bcrypt.hash(senha, 8);
-      console.log('=> 4. Senha criptografada com sucesso.');
+      const novoUsuario = await Usuario.create({ nome, email, senha_hash, cargo });
 
-      const novoUsuario = await Usuario.create({
-        nome,
-        email,
-        senha_hash,
-        cargo,
-      });
-      console.log('=> 5. Usuário criado no banco de dados.');
+      return res.status(201).json({ id: novoUsuario.id, nome, email, cargo });
+    } catch (err) {
+      return res.status(400).json({ error: 'Erro ao criar usuário.' });
+    }
+  }
 
-      return res.status(201).json({
-        id: novoUsuario.id,
-        nome: novoUsuario.nome,
-        email: novoUsuario.email,
-        cargo: novoUsuario.cargo,
-      });
+  // NOVO MÉTODO: EXCLUIR
+  async delete(req, res) {
+    try {
+      const { id } = req.params;
+      const { senhaConfirmacao } = req.body; // Senha vem no corpo da requisição DELETE
 
-    } catch (error) {
-      // PONTO DE VERIFICAÇÃO FINAL: Se algo quebrou, o que foi?
-      console.error('=> X. OCORREU UM ERRO NO BLOCO CATCH:', error);
-      return res.status(500).json({ error: 'Ocorreu um erro interno no servidor.' });
+      // 1. Quem está pedindo? (Admin logado)
+      const adminLogado = await Usuario.findByPk(req.usuarioId);
+      if (!adminLogado) return res.status(401).json({ error: 'Usuário não autenticado.' });
+
+      // 2. Verifica cargo do solicitante
+      if (adminLogado.cargo !== 'administrador') {
+        return res.status(403).json({ error: 'Apenas administradores podem excluir.' });
+      }
+
+      // 3. Verifica a senha do admin logado
+      if (!senhaConfirmacao) return res.status(400).json({ error: 'Senha de confirmação necessária.' });
+      const senhaValida = await bcrypt.compare(senhaConfirmacao, adminLogado.senha_hash);
+      if (!senhaValida) return res.status(401).json({ error: 'Senha de confirmação incorreta.' });
+
+      // 4. Verifica quem será excluído
+      const alvo = await Usuario.findByPk(id);
+      if (!alvo) return res.status(404).json({ error: 'Usuário alvo não encontrado.' });
+
+      // 5. Regra: Admin não apaga Admin
+      if (alvo.cargo === 'administrador') {
+        return res.status(403).json({ error: 'Não é permitido excluir outro administrador.' });
+      }
+
+      await alvo.destroy();
+      return res.json({ message: 'Usuário excluído com sucesso.' });
+
+    } catch (err) {
+      return res.status(500).json({ error: 'Erro interno ao excluir.' });
     }
   }
 }

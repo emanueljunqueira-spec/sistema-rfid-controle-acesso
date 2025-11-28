@@ -4,8 +4,8 @@ POST http://localhost:3333/usuarios
 Content-Type: application/json
 
 {
-  "nome": "Administrador",
-  "email": "admento@ba.com",
+  "nome": "Admin Teste",
+  "email": "admin@teste.com",
   "senha": "123456",
   "cargo": "administrador"
 }
