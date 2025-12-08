@@ -69,45 +69,55 @@ class EventoController {
   async delete(req, res) {
     try {
       const { id } = req.params;
-      const { senhaConfirmacao } = req.body;
+      // Agora pegamos o email também
+      const { emailConfirmacao, senhaConfirmacao } = req.body;
 
-      // 1 — Verificar se é admin
+      // 1. Quem está pedindo? (Admin logado)
       const adminLogado = await Usuario.findByPk(req.usuarioId);
+      if (!adminLogado) return res.status(401).json({ error: 'Usuário não autenticado.' });
 
-      if (!adminLogado || adminLogado.cargo !== 'administrador') {
+      // 2. Verifica cargo
+      if (adminLogado.cargo !== 'administrador') {
         return res.status(403).json({ error: 'Apenas administradores podem excluir eventos.' });
       }
 
-      // 2 — Verifica senha
+      // 3. Verifica E-mail (NOVO)
+      // Sanitização para evitar erros bobos de espaço ou maiúscula
+      const emailBanco = adminLogado.email.trim().toLowerCase();
+      const emailDigitado = (emailConfirmacao || '').trim().toLowerCase();
+
+      if (emailBanco !== emailDigitado) {
+        return res.status(401).json({ 
+          error: 'O e-mail de confirmação não confere com o usuário logado.' 
+        });
+      }
+
+      // 4. Verifica Senha
       if (!senhaConfirmacao) {
         return res.status(400).json({ error: 'Senha obrigatória para confirmar exclusão.' });
       }
 
-      const senhaValida = await bcrypt.compare(
-        senhaConfirmacao,
-        adminLogado.senha_hash
-      );
-
+      const senhaValida = await bcrypt.compare(senhaConfirmacao, adminLogado.senha_hash);
       if (!senhaValida) {
         return res.status(401).json({ error: 'Senha incorreta.' });
       }
 
-      // 3 — Verifica evento
-      const evento = await Evento.findByPk(id);
+      // 5. Busca e Deleta o Evento
+      const evento = await Evento.findByPk(id); // <--- Atenção: Buscando na tabela de Eventos!
 
       if (!evento) {
         return res.status(404).json({ error: 'Evento não encontrado.' });
       }
 
       await evento.destroy();
-
       return res.json({ message: 'Evento excluído com sucesso.' });
 
     } catch (err) {
       console.log(err);
-      return res.status(500).json({ error: 'Erro ao excluir evento.' });
+      return res.status(500).json({ error: 'Erro interno ao excluir evento.' });
     }
   }
-}
+} // Fim da classe EventoController
+
 
 module.exports = new EventoController();

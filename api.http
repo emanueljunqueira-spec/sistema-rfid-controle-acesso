@@ -4,8 +4,8 @@ POST http://localhost:3333/usuarios
 Content-Type: application/json
 
 {
-  "nome": "Admin Teste",
-  "email": "admin@teste.com",
+  "nome": "Teste",
+  "email": "teste@ba.com",
   "senha": "123456",
   "cargo": "administrador"
 }
@@ -39,8 +39,8 @@ POST http://localhost:3333/sessoes
 Content-Type: application/json
 
 {
-  "email": "luan@evento.com",
-  "senha": "123456789"
+  "email": "teste@ba.com",
+  "senha": "123456"
 }
 ###
 POST http://localhost:3333/sessoes
@@ -210,14 +210,31 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxN
 
 ### 16. Vincular um cartão a um participante (sucesso)
 # @name criarCartao
-POST http://localhost:3333/cartoes
+
+
+
+POST http://localhost:3333/participantes
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzYwNDgzMDA4LCJleHAiOjE3NjEwODc4MDh9.CZCjTrEQkcFubvQfwSm8AH8G8CH00TSwxSQnnjZdvzA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwiY2FyZ28iOiJhZG1pbmlzdHJhZG9yIiwiaWF0IjoxNzY0ODA0Njg3LCJleHAiOjE3NjU0MDk0ODd9.m0qwfVfuKTKdimB0xqpKFTi31RoM-zAPxJsoQqniw7A
 
 {
-  "codigo_rfid": "A1:B2:C3:D4",
-  "participante_id": 1
+  "nome": "Teste MQTT Ao Vivo",
+  "email": "mqtt@live.com",
+  "status": true
 }
+
+### 16. Vincular um cartão a um participante (sucesso)
+# @name criarCartao
+
+POST http://localhost:3333/cartoes
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwiY2FyZ28iOiJhZG1pbmlzdHJhZG9yIiwiaWF0IjoxNzY0ODA0Njg3LCJleHAiOjE3NjU0MDk0ODd9.m0qwfVfuKTKdimB0xqpKFTi31RoM-zAPxJsoQqniw7A
+
+{
+  "codigo_rfid": "TESTE-FINAL",
+  "participante_id": 6 
+}
+
 
 
 ### 17. Tentar vincular um cartão a um participante que não existe (erro)

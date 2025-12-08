@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors'); // <--- 1. IMPORTAMOS O CORS AQUI
+const cors = require('cors');
 const sequelize = require('./config/database');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
@@ -12,6 +12,9 @@ const cartaoRoutes = require('./routes/cartaoRoutes');
 const acessoRoutes = require('./routes/acessoRoutes');
 const eventoRoutes = require('./routes/eventoRoutes');
 
+// O require abaixo JÁ INICIA a conexão MQTT. Não precisa fazer mais nada.
+require('./services/MQTTService'); 
+
 class App {
   constructor() {
     this.server = express();
@@ -21,10 +24,7 @@ class App {
   }
 
   middlewares() {
-    // <--- 2. ATIVAMOS O CORS AQUI
-    // Isso libera o acesso para qualquer frontend (ou você pode especificar a origem)
     this.server.use(cors()); 
-    
     this.server.use(express.json());
   }
 
@@ -43,6 +43,8 @@ class App {
     this.server.use(cartaoRoutes);
     this.server.use(acessoRoutes);
     this.server.use(eventoRoutes);
+    
+    // APAGUEI A LINHA QUE DAVA ERRO AQUI!
   }
 
   async database() {
@@ -50,7 +52,6 @@ class App {
       await sequelize.authenticate();
       console.log('✅ Conexão com o banco de dados estabelecida com sucesso.');
       
-      // Sincroniza as tabelas (cria se não existirem)
       await sequelize.sync(); 
       console.log('✅ Tabelas sincronizadas com sucesso.');
     } catch (error) {
@@ -59,5 +60,4 @@ class App {
   }
 }
 
-// Exporta apenas a instância do servidor express
 module.exports = new App().server;

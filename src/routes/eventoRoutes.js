@@ -9,13 +9,14 @@ const routes = new Router();
 routes.use(authMiddleware);
 
 // Criar evento
-routes.post('/eventos', EventoValidator.store, EventoController.store);
+const validate = require('../app/middlewares/validate'); // Importe o validate!
+routes.post('/eventos', validate(EventoValidator.store), EventoController.store);
 
 // Listar eventos
 routes.get('/eventos', EventoController.index);
 
 // Atualizar evento
-routes.put('/eventos/:id', EventoValidator.update, EventoController.update);
+routes.put('/eventos/:id', validate(EventoValidator.update), EventoController.update);
 
 // Deletar evento
 routes.delete('/eventos/:id', EventoController.delete);

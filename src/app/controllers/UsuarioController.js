@@ -31,27 +31,33 @@ class UsuarioController {
   async delete(req, res) {
     try {
       const { id } = req.params;
-      const { senhaConfirmacao } = req.body; // Senha vem no corpo da requisição DELETE
+      // AGORA: Recebemos email e senha para re-autenticação total
+      const { emailConfirmacao, senhaConfirmacao } = req.body; 
 
-      // 1. Quem está pedindo? (Admin logado)
+      // 1. Busca o admin que está logado (pelo ID do token)
       const adminLogado = await Usuario.findByPk(req.usuarioId);
+      
       if (!adminLogado) return res.status(401).json({ error: 'Usuário não autenticado.' });
 
-      // 2. Verifica cargo do solicitante
       if (adminLogado.cargo !== 'administrador') {
         return res.status(403).json({ error: 'Apenas administradores podem excluir.' });
       }
 
-      // 3. Verifica a senha do admin logado
+      // 2. NOVA CAMADA: Verifica se o E-mail de confirmação bate com o do admin logado
+      if (emailConfirmacao !== adminLogado.email) {
+        return res.status(401).json({ error: 'O e-mail de confirmação não confere com o usuário logado.' });
+      }
+
+      // 3. Verifica a senha
       if (!senhaConfirmacao) return res.status(400).json({ error: 'Senha de confirmação necessária.' });
+      
       const senhaValida = await bcrypt.compare(senhaConfirmacao, adminLogado.senha_hash);
       if (!senhaValida) return res.status(401).json({ error: 'Senha de confirmação incorreta.' });
 
-      // 4. Verifica quem será excluído
+      // 4. Lógica de exclusão do alvo
       const alvo = await Usuario.findByPk(id);
       if (!alvo) return res.status(404).json({ error: 'Usuário alvo não encontrado.' });
 
-      // 5. Regra: Admin não apaga Admin
       if (alvo.cargo === 'administrador') {
         return res.status(403).json({ error: 'Não é permitido excluir outro administrador.' });
       }
@@ -60,7 +66,7 @@ class UsuarioController {
       return res.json({ message: 'Usuário excluído com sucesso.' });
 
     } catch (err) {
-      return res.status(500).json({ error: 'Erro interno ao excluir.' });
+      return res.status(500).json({ error: 'Erro interno ao excluir usuário.' });
     }
   }
 }

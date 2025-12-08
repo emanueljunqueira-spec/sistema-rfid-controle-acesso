@@ -1,4 +1,3 @@
-// src/app/controllers/SessaoController.js
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
 const authConfig = require('../../config/auth');
@@ -20,19 +19,21 @@ class SessaoController {
       return res.status(401).json({ error: 'Senha incorreta.' });
     }
 
-    const { id, nome } = usuario;
+    // AQUI ESTAVA O ERRO: Faltava extrair o 'cargo'
+    const { id, nome, cargo } = usuario;
 
-    // 3. Se tudo estiver certo, gera o token
-    const token = jwt.sign({ id }, authConfig.secret, {
+    // 3. Gera o token
+    const token = jwt.sign({ id, cargo }, authConfig.secret, { // Dica: coloquei o cargo dentro do token também
       expiresIn: authConfig.expiresIn,
     });
 
-    // Retorna os dados do usuário e o token
+    // Retorna os dados completos
     return res.json({
       usuario: {
         id,
         nome,
         email,
+        cargo, // <--- Agora o frontend vai receber isso!
       },
       token,
     });
