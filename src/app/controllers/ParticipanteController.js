@@ -10,14 +10,15 @@ class ParticipanteController {
 
   async store(req, res) {
     try {
-      const { nome, email, status } = req.body;
+      const { nome, email, status, evento_id } = req.body;
       if (email) {
         const existe = await Participante.findOne({ where: { email } });
         if (existe) return res.status(400).json({ error: 'E-mail já cadastrado.' });
       }
-      const novo = await Participante.create({ nome, email, status });
+      const novo = await Participante.create({ nome, email, status, evento_id });
       return res.status(201).json(novo);
     } catch (err) {
+      console.error('Erro ao criar participante:', err);
       return res.status(500).json({ error: 'Erro ao criar participante.' });
     }
   }
