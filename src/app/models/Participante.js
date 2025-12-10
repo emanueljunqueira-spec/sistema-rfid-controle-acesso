@@ -5,6 +5,11 @@ const sequelize = require('../../config/database');
 class Participante extends Model {
   // Adicione este método
   static associate(models) {
+    // Um Participante pertence a um Evento
+    this.belongsTo(models.Evento, {
+      foreignKey: 'evento_id',
+      as: 'evento',
+    });
     // Um Participante pode ter muitos CartoesRFID
     this.hasMany(models.CartaoRFID, {
       foreignKey: 'participante_id',
@@ -20,6 +25,16 @@ Participante.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+    evento_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'eventos',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL',
     },
     nome: {
       type: DataTypes.STRING(100),

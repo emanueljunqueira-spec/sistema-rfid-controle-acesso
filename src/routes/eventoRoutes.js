@@ -21,4 +21,7 @@ routes.put('/eventos/:id', validate(EventoValidator.update), EventoController.up
 // Deletar evento
 routes.delete('/eventos/:id', EventoController.delete);
 
+// Listar participantes de um evento específico
+routes.get('/eventos/:id/participantes', EventoController.listarParticipantes);
+
 module.exports = routes;
