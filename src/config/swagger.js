@@ -49,6 +49,10 @@ const options = {
       {
         name: 'Acesso',
         description: 'Endpoints para registro e log de acessos (Entrada/Saída).'
+      },
+      {
+        name: 'Eventos',
+        description: 'Gerenciamento de eventos (criar, listar, atualizar, excluir).'
       }
     ],
     // Definição do nosso esquema de segurança JWT

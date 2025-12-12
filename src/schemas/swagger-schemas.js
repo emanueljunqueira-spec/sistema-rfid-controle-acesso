@@ -254,4 +254,127 @@
  *               properties:
  *                 nome:
  *                   type: string
+ * 
+ *     Evento:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: ID auto-gerado do evento
+ *         nome:
+ *           type: string
+ *           description: Nome do evento
+ *         descricao:
+ *           type: string
+ *           description: Descrição detalhada do evento
+ *         data_inicio:
+ *           type: string
+ *           format: date-time
+ *           description: Data e hora de início do evento
+ *         data_fim:
+ *           type: string
+ *           format: date-time
+ *           description: Data e hora de término do evento
+ *         local:
+ *           type: string
+ *           description: Local onde o evento será realizado
+ *         criado_em:
+ *           type: string
+ *           format: date-time
+ *         atualizado_em:
+ *           type: string
+ *           format: date-time
+ *       example:
+ *         id: 1
+ *         nome: "Conferência Tech 2025"
+ *         descricao: "Evento anual de tecnologia"
+ *         data_inicio: "2025-12-20T09:00:00.000Z"
+ *         data_fim: "2025-12-20T18:00:00.000Z"
+ *         local: "Centro de Convenções"
+ *         criado_em: "2025-12-01T10:00:00.000Z"
+ *         atualizado_em: "2025-12-01T10:00:00.000Z"
+ * 
+ *     NovoEvento:
+ *       type: object
+ *       required:
+ *         - nome
+ *         - data_inicio
+ *         - data_fim
+ *       properties:
+ *         nome:
+ *           type: string
+ *           description: Nome do evento
+ *         descricao:
+ *           type: string
+ *           description: Descrição do evento
+ *         data_inicio:
+ *           type: string
+ *           format: date-time
+ *           description: Data e hora de início
+ *         data_fim:
+ *           type: string
+ *           format: date-time
+ *           description: Data e hora de término
+ *         local:
+ *           type: string
+ *           description: Local do evento
+ *       example:
+ *         nome: "Workshop de Node.js"
+ *         descricao: "Workshop prático de desenvolvimento backend"
+ *         data_inicio: "2025-12-25T14:00:00.000Z"
+ *         data_fim: "2025-12-25T18:00:00.000Z"
+ *         local: "Sala 101"
+ * 
+ *     AtualizarEvento:
+ *       type: object
+ *       properties:
+ *         nome:
+ *           type: string
+ *         descricao:
+ *           type: string
+ *         data_inicio:
+ *           type: string
+ *           format: date-time
+ *         data_fim:
+ *           type: string
+ *           format: date-time
+ *         local:
+ *           type: string
+ *       example:
+ *         nome: "Workshop de Node.js - Atualizado"
+ *         local: "Sala 202"
+ * 
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: integer
+ *           description: Código HTTP do erro
+ *         message:
+ *           type: string
+ *           description: Mensagem de erro
+ *         errors:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               field:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *       example:
+ *         status: 400
+ *         message: "Erro de validação"
+ *         errors:
+ *           - field: "email"
+ *             message: "Email inválido"
+ * 
+ *     SuccessResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Mensagem de sucesso
+ *       example:
+ *         message: "Operação realizada com sucesso"
  */
