@@ -1,12 +1,11 @@
-// src/app/models/Usuario.js
 const { Model, DataTypes } = require('sequelize');
-const sequelize = require('../../config/database'); // Importa a conexão
+const sequelize = require('../../config/database');
+const bcrypt = require('bcryptjs'); // Certifique-se de ter instalado: npm install bcryptjs
 
 class Usuario extends Model {}
 
 Usuario.init(
   {
-    // Define os campos da tabela (colunas)
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -14,30 +13,46 @@ Usuario.init(
     },
     nome: {
       type: DataTypes.STRING(100),
-      allowNull: false, // Não permite valor nulo
+      allowNull: false,
     },
     email: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true, // Garante que o email seja único no banco
+      unique: true,
     },
     senha_hash: {
       type: DataTypes.STRING(255),
       allowNull: false,
     },
+    // Campo virtual: existe no código, mas não no banco
+    senha: {
+      type: DataTypes.VIRTUAL, 
+      allowNull: true, 
+    },
     cargo: {
       type: DataTypes.STRING(50),
       allowNull: false,
+      validate: {
+        isIn: [['administrador', 'gerente', 'operador']], // Validação extra do Sequelize
+      }
     },
   },
   {
-    sequelize, // Passa a instância da conexão
-    modelName: 'Usuario', // Nome do modelo
-    tableName: 'usuarios', // Nome da tabela no banco de dados
-    timestamps: true, // Cria os campos `createdAt` e `updatedAt` automaticamente
-    createdAt: 'criado_em', // Renomeia o campo `createdAt`
-    updatedAt: false, // Desativa o campo `updatedAt` se não for necessário
+    sequelize,
+    modelName: 'Usuario',
+    tableName: 'usuarios',
+    timestamps: true,
+    createdAt: 'criado_em',
+    updatedAt: false,
   }
 );
+
+// HOOK DE SEGURANÇA (O Segredo)
+// Antes de salvar qualquer usuário, se a senha foi informada, criptografa ela.
+Usuario.addHook('beforeSave', async (usuario) => {
+  if (usuario.senha) {
+    usuario.senha_hash = await bcrypt.hash(usuario.senha, 8);
+  }
+});
 
 module.exports = Usuario;

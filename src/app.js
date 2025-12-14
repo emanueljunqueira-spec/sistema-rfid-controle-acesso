@@ -12,9 +12,6 @@ const cartaoRoutes = require('./routes/cartaoRoutes');
 const acessoRoutes = require('./routes/acessoRoutes');
 const eventoRoutes = require('./routes/eventoRoutes');
 
-// O require abaixo JÁ INICIA a conexão MQTT. Não precisa fazer mais nada.
-require('./services/MQTTService'); 
-
 class App {
   constructor() {
     this.server = express();
@@ -24,7 +21,8 @@ class App {
   }
 
   middlewares() {
-    this.server.use(cors()); 
+    // Permite que o frontend (porta 3000) converse com o backend (porta 3333)
+    this.server.use(cors({ origin: '*' })); 
     this.server.use(express.json());
   }
 
@@ -43,21 +41,24 @@ class App {
     this.server.use(cartaoRoutes);
     this.server.use(acessoRoutes);
     this.server.use(eventoRoutes);
-    
-    // APAGUEI A LINHA QUE DAVA ERRO AQUI!
   }
 
   async database() {
     try {
       await sequelize.authenticate();
-      console.log('✅ Conexão com o banco de dados estabelecida com sucesso.');
-      
-      await sequelize.sync(); 
-      console.log('✅ Tabelas sincronizadas com sucesso.');
-    } catch (error) {
-      console.error('❌ Não foi possível conectar ao banco de dados:', error);
+      console.log('✅ Banco de dados conectado com sucesso.');
+      await sequelize.sync();
+      console.log('✅ Modelos sincronizados.');
+    } catch (err) {
+      console.error('❌ Erro ao conectar ao banco:', err);
     }
+  }
+
+  listen(PORT) {
+    return this.server.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    });
   }
 }
 
-module.exports = new App().server;
+module.exports = new App();

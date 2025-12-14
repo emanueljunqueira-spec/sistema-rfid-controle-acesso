@@ -1,177 +1,171 @@
 const Evento = require('../models/Evento');
-const Participante = require('../models/Participante');
-const CartaoRFID = require('../models/CartaoRFID');
-const RegistroAcesso = require('../models/RegistroAcesso');
 const Usuario = require('../models/Usuario');
 const bcrypt = require('bcryptjs');
-const { Op } = require('sequelize');
+const sequelize = require('../../config/database');
+const { CARGOS } = require('../utils/rbac'); // Certifique-se que rbac exporta CARGOS
 
 class EventoController {
   
-  // LISTAR EVENTOS
+  // LISTAR EVENTOS (Público para logados)
   async index(req, res) {
     try {
       const eventos = await Evento.findAll({
-        order: [['data_evento', 'ASC']],
+        order: [['data_evento', 'DESC']],
       });
-
       return res.json(eventos);
     } catch (err) {
-      console.log(err);
       return res.status(500).json({ error: 'Erro ao listar eventos.' });
     }
   }
 
-  // CRIAR EVENTO
+  // CRIAR EVENTO (Restrito: Admin/Gerente)
   async store(req, res) {
+    const transaction = await sequelize.transaction();
     try {
       const { titulo, descricao, data_evento, local, status } = req.body;
 
-      if (!titulo) {
-        return res.status(400).json({ error: 'Título é obrigatório.' });
+      // 1. Verifica permissão
+      const usuarioLogado = await Usuario.findByPk(req.usuarioId, { transaction });
+      if (usuarioLogado.cargo === CARGOS.OPERADOR) {
+        await transaction.rollback();
+        return res.status(403).json({ error: 'Operadores não podem criar eventos.' });
       }
 
-      if (!data_evento) {
-        return res.status(400).json({ error: 'Data do evento é obrigatória.' });
+      if (!titulo || !data_evento || !local) {
+        await transaction.rollback();
+        return res.status(400).json({ error: 'Título, Data e Local são obrigatórios.' });
       }
 
       const novo = await Evento.create({
-        titulo,
-        descricao,
-        data_evento,
-        local,
-        status,
-      });
+        titulo, descricao, data_evento, local, status
+      }, { transaction });
 
+      await transaction.commit();
       return res.status(201).json(novo);
+
     } catch (err) {
-      console.log(err);
+      await transaction.rollback();
       return res.status(500).json({ error: 'Erro ao criar evento.' });
     }
   }
 
-  // EDITAR EVENTO
+  // ATUALIZAR EVENTO
   async update(req, res) {
+    const transaction = await sequelize.transaction();
     try {
       const { id } = req.params;
+      const dados = req.body;
 
-      const evento = await Evento.findByPk(id);
+      const usuarioLogado = await Usuario.findByPk(req.usuarioId, { transaction });
+      if (usuarioLogado.cargo === CARGOS.OPERADOR) {
+        await transaction.rollback();
+        return res.status(403).json({ error: 'Operadores não podem editar eventos.' });
+      }
+
+      const evento = await Evento.findByPk(id, { transaction });
       if (!evento) {
+        await transaction.rollback();
         return res.status(404).json({ error: 'Evento não encontrado.' });
       }
 
-      await evento.update(req.body);
+      await evento.update(dados, { transaction });
+      await transaction.commit();
       return res.json(evento);
 
     } catch (err) {
-      console.log(err);
+      await transaction.rollback();
       return res.status(500).json({ error: 'Erro ao atualizar evento.' });
     }
   }
 
-  // DELETAR EVENTO (APENAS ADMIN)
+  // EXCLUIR EVENTO (Zona de Perigo - Com Senha)
   async delete(req, res) {
+    const transaction = await sequelize.transaction();
     try {
       const { id } = req.params;
-      // Agora pegamos o email também
       const { emailConfirmacao, senhaConfirmacao } = req.body;
 
-      // 1. Quem está pedindo? (Admin logado)
-      const adminLogado = await Usuario.findByPk(req.usuarioId);
-      if (!adminLogado) return res.status(401).json({ error: 'Usuário não autenticado.' });
+      // 1. Segurança: Busca Admin Logado
+      const usuarioLogado = await Usuario.findByPk(req.usuarioId, { transaction });
 
-      // 2. Verifica cargo
-      if (adminLogado.cargo !== 'administrador') {
-        return res.status(403).json({ error: 'Apenas administradores podem excluir eventos.' });
+      // 2. Permissão: Operador não deleta evento
+      if (usuarioLogado.cargo === CARGOS.OPERADOR) {
+        await transaction.rollback();
+        return res.status(403).json({ error: 'Operadores não podem excluir eventos.' });
       }
 
-      // 3. Verifica E-mail (NOVO)
-      // Sanitização para evitar erros bobos de espaço ou maiúscula
-      const emailBanco = adminLogado.email.trim().toLowerCase();
-      const emailDigitado = (emailConfirmacao || '').trim().toLowerCase();
-
-      if (emailBanco !== emailDigitado) {
-        return res.status(401).json({ 
-          error: 'O e-mail de confirmação não confere com o usuário logado.' 
-        });
+      // 3. Re-autenticação (Sudo Mode)
+      if (emailConfirmacao !== usuarioLogado.email) {
+        await transaction.rollback();
+        return res.status(401).json({ error: 'E-mail de confirmação incorreto.' });
       }
 
-      // 4. Verifica Senha
-      if (!senhaConfirmacao) {
-        return res.status(400).json({ error: 'Senha obrigatória para confirmar exclusão.' });
-      }
-
-      const senhaValida = await bcrypt.compare(senhaConfirmacao, adminLogado.senha_hash);
+      const senhaValida = await bcrypt.compare(senhaConfirmacao, usuarioLogado.senha_hash);
       if (!senhaValida) {
-        return res.status(401).json({ error: 'Senha incorreta.' });
+        await transaction.rollback();
+        return res.status(401).json({ error: 'Senha de confirmação incorreta.' });
       }
 
-      // 5. Busca e Deleta o Evento
-      const evento = await Evento.findByPk(id); // <--- Atenção: Buscando na tabela de Eventos!
-
+      // 4. Executa a exclusão
+      const evento = await Evento.findByPk(id, { transaction });
       if (!evento) {
+        await transaction.rollback();
         return res.status(404).json({ error: 'Evento não encontrado.' });
       }
 
-      await evento.destroy();
+      await evento.destroy({ transaction });
+      await transaction.commit();
+
       return res.json({ message: 'Evento excluído com sucesso.' });
 
     } catch (err) {
-      console.log(err);
-      return res.status(500).json({ error: 'Erro interno ao excluir evento.' });
+      await transaction.rollback();
+      return res.status(500).json({ error: 'Erro ao excluir evento. Verifique se há participantes vinculados.' });
     }
   }
 
-  // LISTAR PARTICIPANTES DE UM EVENTO COM STATUS DE PRESENÇA
+  // LISTAR PARTICIPANTES (Para a Timeline)
   async listarParticipantes(req, res) {
     try {
       const { id } = req.params;
-
-      // 1. Verifica se o evento existe
       const evento = await Evento.findByPk(id);
-      if (!evento) {
-        return res.status(404).json({ error: 'Evento não encontrado.' });
-      }
+      if (!evento) return res.status(404).json({ error: 'Evento não encontrado.' });
 
-      // 2. Busca participantes do evento com seus cartões e último registro de acesso
-      const participantes = await Participante.findAll({
-        where: { evento_id: id },
+      // Busca participantes deste evento
+      const participantes = await evento.getParticipantes({
         include: [
           {
-            model: CartaoRFID,
-            as: 'cartoes',
-            include: [
-              {
-                model: RegistroAcesso,
-                as: 'registros',
-                order: [['hora_evento', 'DESC']],
-                limit: 1,
-              },
-            ],
-          },
-        ],
-        order: [['nome', 'ASC']],
+            association: 'cartoes',
+            include: [{ association: 'registros' }] // Traz o histórico completo
+          }
+        ]
       });
 
-      // 3. Formata a resposta com status de presença
-      const participantesFormatados = participantes.map((p) => {
-        // Pega o último registro de acesso (se houver)
-        let ultimoRegistro = null;
+      // Formata os dados para o Frontend (Timeline)
+      const participantesFormatados = participantes.map(p => {
+        let historicoAcessos = [];
         let statusPresenca = 'sem_registro';
 
+        // Compila todos os registros de todos os cartões desse participante
         if (p.cartoes && p.cartoes.length > 0) {
-          // Percorre todos os cartões para encontrar o registro mais recente
-          p.cartoes.forEach((cartao) => {
-            if (cartao.registros && cartao.registros.length > 0) {
-              const registro = cartao.registros[0];
-              if (!ultimoRegistro || new Date(registro.hora_evento) > new Date(ultimoRegistro.hora_evento)) {
-                ultimoRegistro = registro;
-              }
+          p.cartoes.forEach(cartao => {
+            if (cartao.registros) {
+              cartao.registros.forEach(registro => {
+                historicoAcessos.push({
+                  id: registro.id,
+                  tipo: registro.tipo_movimento,
+                  data_hora: registro.hora_evento,
+                  mensagem: registro.mensagem
+                });
+              });
             }
           });
 
-          if (ultimoRegistro) {
-            statusPresenca = ultimoRegistro.tipo_movimento; // 'entrada', 'saida', 'negado'
+          // Ordena do mais recente para o mais antigo
+          historicoAcessos.sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
+
+          if (historicoAcessos.length > 0) {
+            statusPresenca = historicoAcessos[0].tipo; // O último define o status atual
           }
         }
 
@@ -179,35 +173,22 @@ class EventoController {
           id: p.id,
           nome: p.nome,
           email: p.email,
-          status_cadastro: p.status, // status do cadastro (ativo/inativo)
-          status_presenca: statusPresenca, // 'entrada', 'saida', 'negado', 'sem_registro'
-          ultimo_registro: ultimoRegistro
-            ? {
-                tipo: ultimoRegistro.tipo_movimento,
-                data_hora: ultimoRegistro.hora_evento,
-                mensagem: ultimoRegistro.mensagem,
-              }
-            : null,
+          status_cadastro: p.status,
+          status_presenca: statusPresenca,
+          historico_acessos: historicoAcessos // Enviamos a lista completa para a timeline visual
         };
       });
 
       return res.json({
-        evento: {
-          id: evento.id,
-          titulo: evento.titulo,
-          data_evento: evento.data_evento,
-          local: evento.local,
-          status: evento.status,
-        },
-        participantes: participantesFormatados,
-        total: participantesFormatados.length,
+        evento,
+        participantes: participantesFormatados
       });
+
     } catch (err) {
-      console.log(err);
-      return res.status(500).json({ error: 'Erro ao listar participantes do evento.' });
+      console.error(err);
+      return res.status(500).json({ error: 'Erro ao buscar dados do evento.' });
     }
   }
-} // Fim da classe EventoController
-
+}
 
 module.exports = new EventoController();

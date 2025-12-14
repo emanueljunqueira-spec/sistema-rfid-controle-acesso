@@ -6,16 +6,25 @@ const RegistroAcesso = require('../app/models/RegistroAcesso');
 
 class MQTTService {
   constructor() {
-    this.client = mqtt.connect('mqtt://broker.hivemq.com:1883');
-    
+    this.client = null;
     this.topicoLeitura = 'sistema-rfid/leitura';
     this.topicoResposta = 'sistema-rfid/resposta';
     this.topicoMonitor = 'sistema-rfid/monitor';
-
-    this.setup();
   }
 
+  /**
+   * Inicializa a conexão MQTT
+   * Chamado explicitamente em index.js para evitar side-effects
+   */
   setup() {
+    // Evita múltiplas inicializações
+    if (this.client) {
+      console.log('📡 MQTTService já inicializado.');
+      return;
+    }
+
+    this.client = mqtt.connect('mqtt://broker.hivemq.com:1883');
+
     this.client.on('connect', () => {
       console.log('📡 Conectado ao Broker MQTT!');
       this.client.subscribe(this.topicoLeitura, (err) => {
@@ -29,6 +38,14 @@ class MQTTService {
         console.log(`📥 Cartão recebido via MQTT: ${codigoRfid}`);
         await this.processarAcesso(codigoRfid);
       }
+    });
+
+    this.client.on('error', (err) => {
+      console.error('❌ Erro no MQTT:', err);
+    });
+
+    this.client.on('offline', () => {
+      console.log('⚠️  MQTT desconectado. Tentando reconectar...');
     });
   }
 
@@ -97,9 +114,6 @@ class MQTTService {
       });
 
       this.publicarResposta('autorizado', movimento);
-
-      // === CORREÇÃO AQUI ===
-      // Agora passamos os 3 argumentos: (Acesso, ID do Participante, Nome)
       this.publicarMonitor(novoAcesso, cartao.participante.id, cartao.participante.nome);
 
     } catch (error) {
@@ -108,20 +122,34 @@ class MQTTService {
   }
 
   publicarResposta(status, mensagem) {
+    if (!this.client) return;
     const payload = JSON.stringify({ status, msg: mensagem });
     this.client.publish(this.topicoResposta, payload);
   }
 
   publicarMonitor(acesso, participanteId, nomeParticipante) {
+    if (!this.client) return;
     const payload = JSON.stringify({
       id: acesso.id,
-      participanteId: participanteId, // Agora isso não será undefined
+      participanteId: participanteId,
       participante: nomeParticipante,
       tipo: acesso.tipo_movimento,
       horario: acesso.hora_evento,
       status: 'sucesso'
     });
     this.client.publish(this.topicoMonitor, payload);
+  }
+
+  /**
+   * Desconecta do MQTT de forma segura
+   */
+  disconnect() {
+    if (this.client) {
+      this.client.end(true, () => {
+        console.log('📡 Desconectado do MQTT.');
+        this.client = null;
+      });
+    }
   }
 }
 

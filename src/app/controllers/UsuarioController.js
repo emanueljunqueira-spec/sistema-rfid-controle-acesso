@@ -1,71 +1,124 @@
-// src/app/controllers/UsuarioController.js
 const Usuario = require('../models/Usuario');
-const bcrypt = require('bcryptjs');
+const sequelize = require('../../config/database');
+// Importa as funções de permissão (RBAC)
+const { podeCriarUsuario, podeDeletarUsuario } = require('../utils/rbac');
+// Nota: O bcrypt é usado aqui APENAS para validar a senha do admin na exclusão,
+// não para criar o usuário (o Model faz isso).
+const bcrypt = require('bcryptjs'); 
 
 class UsuarioController {
+  
+  // Listar Usuários
   async index(req, res) {
-    const usuarios = await Usuario.findAll({
-      attributes: ['id', 'nome', 'email', 'cargo'],
-    });
-    return res.json(usuarios);
+    try {
+      const usuarios = await Usuario.findAll({
+        attributes: ['id', 'nome', 'email', 'cargo'], // Não retorna a senha
+        order: [['nome', 'ASC']]
+      });
+      return res.json(usuarios);
+    } catch (err) {
+      console.error('Erro ao listar usuários:', err);
+      return res.status(500).json({ error: 'Erro ao listar usuários.' });
+    }
   }
 
+  // Criar Usuário
   async store(req, res) {
+    const transaction = await sequelize.transaction();
     try {
       const { nome, email, senha, cargo } = req.body;
-      if (!senha) return res.status(400).json({ error: 'Senha obrigatória.' });
+      
+      // 1. Quem está tentando criar?
+      const usuarioLogado = await Usuario.findByPk(req.usuarioId, { transaction });
+      
+      // 2. Validação RBAC: Esse usuário tem poder para criar o cargo solicitado?
+      if (!podeCriarUsuario(usuarioLogado.cargo, cargo)) {
+        await transaction.rollback();
+        return res.status(403).json({ 
+          error: `Seu cargo (${usuarioLogado.cargo}) não permite criar usuários do tipo '${cargo}'.` 
+        });
+      }
 
-      const existe = await Usuario.findOne({ where: { email } });
-      if (existe) return res.status(400).json({ error: 'E-mail já em uso.' });
+      // 3. Verifica duplicidade
+      const existe = await Usuario.findOne({ where: { email }, transaction });
+      if (existe) {
+        await transaction.rollback();
+        return res.status(400).json({ error: 'E-mail já em uso.' });
+      }
 
-      const senha_hash = await bcrypt.hash(senha, 8);
-      const novoUsuario = await Usuario.create({ nome, email, senha_hash, cargo });
+      // 4. Criação
+      // ATENÇÃO: Passamos 'senha' pura. O Hook do Model vai criptografar.
+      const novoUsuario = await Usuario.create(
+        { nome, email, senha, cargo }, 
+        { transaction }
+      );
 
-      return res.status(201).json({ id: novoUsuario.id, nome, email, cargo });
+      await transaction.commit();
+
+      return res.status(201).json({
+        id: novoUsuario.id,
+        nome: novoUsuario.nome,
+        email: novoUsuario.email,
+        cargo: novoUsuario.cargo
+      });
+
     } catch (err) {
+      await transaction.rollback();
+      console.error(err);
       return res.status(400).json({ error: 'Erro ao criar usuário.' });
     }
   }
 
-  // NOVO MÉTODO: EXCLUIR
+  // Deletar Usuário (Zona de Perigo)
   async delete(req, res) {
+    const transaction = await sequelize.transaction();
     try {
       const { id } = req.params;
-      // AGORA: Recebemos email e senha para re-autenticação total
-      const { emailConfirmacao, senhaConfirmacao } = req.body; 
+      const { emailConfirmacao, senhaConfirmacao } = req.body;
 
-      // 1. Busca o admin que está logado (pelo ID do token)
-      const adminLogado = await Usuario.findByPk(req.usuarioId);
-      
-      if (!adminLogado) return res.status(401).json({ error: 'Usuário não autenticado.' });
+      // 1. Busca admin logado para re-autenticação
+      const usuarioLogado = await Usuario.findByPk(req.usuarioId, { transaction });
 
-      if (adminLogado.cargo !== 'administrador') {
-        return res.status(403).json({ error: 'Apenas administradores podem excluir.' });
+      // 2. Valida credenciais do Admin (Segurança extra)
+      if (usuarioLogado.email !== emailConfirmacao) {
+        await transaction.rollback();
+        return res.status(401).json({ error: 'E-mail de confirmação incorreto.' });
       }
 
-      // 2. NOVA CAMADA: Verifica se o E-mail de confirmação bate com o do admin logado
-      if (emailConfirmacao !== adminLogado.email) {
-        return res.status(401).json({ error: 'O e-mail de confirmação não confere com o usuário logado.' });
+      const senhaValida = await bcrypt.compare(senhaConfirmacao, usuarioLogado.senha_hash);
+      if (!senhaValida) {
+        await transaction.rollback();
+        return res.status(401).json({ error: 'Senha de confirmação incorreta.' });
       }
 
-      // 3. Verifica a senha
-      if (!senhaConfirmacao) return res.status(400).json({ error: 'Senha de confirmação necessária.' });
-      
-      const senhaValida = await bcrypt.compare(senhaConfirmacao, adminLogado.senha_hash);
-      if (!senhaValida) return res.status(401).json({ error: 'Senha de confirmação incorreta.' });
-
-      // 4. Lógica de exclusão do alvo
-      const alvo = await Usuario.findByPk(id);
-      if (!alvo) return res.status(404).json({ error: 'Usuário alvo não encontrado.' });
-
-      if (alvo.cargo === 'administrador') {
-        return res.status(403).json({ error: 'Não é permitido excluir outro administrador.' });
+      // 3. Busca o alvo
+      const alvo = await Usuario.findByPk(id, { transaction });
+      if (!alvo) {
+        await transaction.rollback();
+        return res.status(404).json({ error: 'Usuário não encontrado.' });
       }
 
-      await alvo.destroy();
+      // 4. Validação RBAC: Posso deletar esse cargo?
+      if (!podeDeletarUsuario(usuarioLogado.cargo, alvo.cargo)) {
+        await transaction.rollback();
+        return res.status(403).json({ 
+          error: `Seu cargo não permite excluir usuários do tipo '${alvo.cargo}'.` 
+        });
+      }
+
+      // 5. Proteção contra suicídio digital (Não deletar a si mesmo)
+      if (usuarioLogado.id === alvo.id) {
+        await transaction.rollback();
+        return res.status(400).json({ error: 'Você não pode excluir sua própria conta.' });
+      }
+
+      await alvo.destroy({ transaction });
+      await transaction.commit();
+
       return res.json({ message: 'Usuário excluído com sucesso.' });
 
     } catch (err) {
+      await transaction.rollback();
       return res.status(500).json({ error: 'Erro interno ao excluir usuário.' });
     }
   }

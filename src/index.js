@@ -1,8 +1,9 @@
-// src/index.js
 const app = require('./app');
+const MQTTService = require('./services/MQTTService');
 
 const PORT = process.env.PORT || 3333;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
+// Inicializa o serviço MQTT
+MQTTService.setup();
+
+app.listen(PORT);
